@@ -1,1 +1,1 @@
-# FinanceSim
+# financesim
