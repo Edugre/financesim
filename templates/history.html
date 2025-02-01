@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    History
+{% endblock %}
+
+{% block main %}
+<h1 class="mb-3">Transaction History</h1>
+<div class="d-flex justify-content-center">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Transaction</th>
+                <th>Symbol</th>
+                <th>Shares</th>
+                <th>Price</th>
+                <th>Date</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction["transId"] }}</td>
+                <td>{{ transaction["symbol"] }}</td>
+                <td>{{ transaction["numbShares"] }}</td>
+                <td>{{ transaction["price"] }}</td>
+                <td>{{ transaction["date"] }}</td>
+                <td>{{ transaction["type"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

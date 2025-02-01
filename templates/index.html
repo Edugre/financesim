@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+<div class="row mb-3">
+    <div class="col-md-6"><h1>{{ user["username"] }}</h1></div>
+    <div class="col-md-6"><h1 class="text-muted">{{ user["cash"] }}</h1></div>
+</div>
+<h2 class="mb-3">Your stocks</h2>
+<div class="d-flex justify-content-center">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Symbol</th>
+                <th scope="col">Shares</th>
+                <th scope="col">Price</th>
+                <th scope="col">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for share in shares %}
+            <tr>
+                <td scope="row">{{ share["symbol"] }}</td>
+                <td>{{ share["numbShares"] }}</td>
+                <td>{{ share["price"] }}</td>
+                <td>{{ share["total"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th></th>
+                <th></th>
+                <th style="text-align: right">Cash</th>
+                <td>{{ user["cash"] }}</td>
+            </tr>
+            <tr>
+                <th></th>
+                <th></th>
+                <th style="text-align: right">TOTAL</th>
+                <td>{{ user["total"] }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% endblock %}
+
