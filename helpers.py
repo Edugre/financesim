@@ -82,13 +82,11 @@ def get_user_row(user_id):
             )
 
             user_row = cursor.fetchone()
+            cursor.close()
             return user_row
     except sqlite3.Error as e:
         print(f"SQLite error: {e}")
         return None
-    finally:
-        if cursor:
-            cursor.close()
 
 def get_user_shares(user_id):
     try:
@@ -98,15 +96,13 @@ def get_user_shares(user_id):
             cursor = conn.cursor()
 
             cursor.execute(
-                "SELECT * FROMT stocks WHERE userId = :id", 
+                "SELECT * FROM stocks WHERE userId = :id", 
                 {"id": user_id}
             )
 
-            shares = cursor.fetchone()
+            shares = cursor.fetchall()
+            cursor.close()
             return shares
     except sqlite3.Error as e:
         print(f"SQLite error: {e}")
         return None 
-    finally:
-        if cursor:
-            cursor.close()  
