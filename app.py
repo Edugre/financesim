@@ -4,7 +4,10 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd, get_user_row, get_user_shares
+from helpers import apology, login_required, lookup, usd, get_user_row, get_user_shares, susbstract_user_cash, create_transaction_record, update_user_shares
+
+
+
 
 # Configure application
 app = Flask(__name__)
@@ -68,22 +71,18 @@ def buy():
         if stock is None:
             return apology("invalid stock symbol", 400)
 
-        rows = db.execute("SELECT * FROM USERS WHERE id = (?)", session["user_id"])
-        cash = rows[0]["cash"]
+        userRow = get_user_row(session["user_id"])
+        cash = userRow["cash"]
         total_cost = int(request.form.get("shares")) * stock["price"]
         if total_cost > cash:
             return apology("not enough cash", 403)
 
-        db.execute("UPDATE users SET cash = cash - (?) WHERE id = (?)",
-                   total_cost, session["user_id"])
-        db.execute("INSERT INTO transactions (userId, numbShares, price, date, symbol, type) VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, 'purchase')",
-                   session["user_id"], int(request.form.get("shares")), stock["price"], request.form.get("symbol"))
-        try:
-            db.execute("INSERT INTO stocks (userId, numbShares, symbol) VALUES (?, ?, ?)",
-                       session["user_id"], int(request.form.get("shares")), request.form.get("symbol"))
-        except:
-            db.execute("UPDATE stocks SET numbShares = numbShares + (?) WHERE userId = (?)",
-                       int(request.form.get("shares")), session["user_id"])
+        susbstract_user_cash(session["user_id"], total_cost)
+
+        create_transaction_record(session["user_id"], int(request.form.get("shares")), stock["price"], request.form.get("symbol"))
+
+        update_user_shares(session["user_id"], request.form.get("symbol"), int(request.form.get("shares")))
+        
         flash("Bought!")
         return redirect("/")
     else:
