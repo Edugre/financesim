@@ -5,7 +5,7 @@ from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, login_required, lookup, usd
-from sqlhelpers import get_user_row, get_user_shares, substract_user_cash, create_transaction_record, update_user_shares, register_user, remove_stocks, add_user_cash
+from sqlhelpers import get_user_row, get_user_shares, substract_user_cash, create_transaction_record, update_user_shares, register_user, remove_stocks, add_user_cash, change_user_password
 
 # Configure application
 app = Flask(__name__)
@@ -46,6 +46,7 @@ def index():
                 user["total"] += (stock["price"]* shareDB["numbShares"])
         else: 
             apology("user not found", 404)
+
         user["total"] = usd(user["total"])
         user["cash"] = usd(user["cash"])
 
@@ -236,18 +237,18 @@ def passwordChange():
         if not request.form.get("password"):
             return apology("must provide password", 403)
 
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("name"))
+        rows = get_user_row(session["user_id"])
 
         if len(rows) != 1 or not check_password_hash(
-            rows[0]["hash"], request.form.get("password")
+            rows["hash"], request.form.get("password")
         ):
             return apology("invalid username and/or password", 403)
 
         if request.form.get("new_password") != request.form.get("confirm"):
             return apology("passwords don't match", 403)
 
-        db.execute("UPDATE users SET hash = (?) WHERE username = (?)", generate_password_hash(
-            request.form.get("new_password")), request.form.get("name"))
+        change_user_password(request.form.get("name"), generate_password_hash(request.form.get("new_password")))
+        
         flash("Password changed!")
 
         return redirect("/")

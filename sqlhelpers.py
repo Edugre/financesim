@@ -140,3 +140,18 @@ def add_user_cash(user_id, amount):
     except sqlite3.Error as e:
         print(f"SQLite error: {e}")
         return None
+    
+def change_user_password(user_id, new_password):
+    try:
+        with sqlite3.connect("finance.db") as conn: 
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "UPDATE users SET hash = :new_password WHERE id = :userId",
+                {"new_password": new_password, "userId": user_id}
+            )
+            conn.commit()
+            cursor.close()
+    except sqlite3.Error as e:
+        print(f"SQLite error: {e}")
+        return None
