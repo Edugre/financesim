@@ -5,7 +5,7 @@ from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, login_required, lookup, usd
-from sqlhelpers import get_user_row, get_user_shares, substract_user_cash, create_transaction_record, update_user_shares
+from sqlhelpers import get_user_row, get_user_shares, substract_user_cash, create_transaction_record, update_user_shares, register_user, remove_stocks, add_user_cash
 
 # Configure application
 app = Flask(__name__)
@@ -77,7 +77,7 @@ def buy():
 
         substract_user_cash(session["user_id"], total_cost)
 
-        create_transaction_record(session["user_id"], int(request.form.get("shares")), stock["price"], request.form.get("symbol"))
+        create_transaction_record(session["user_id"], int(request.form.get("shares")), stock["price"], request.form.get("symbol"), "purchase")
 
         update_user_shares(session["user_id"], request.form.get("symbol"), int(request.form.get("shares")))
         
@@ -177,7 +177,7 @@ def register():
             return apology("passwords don't match", 400)
         try:
             password = generate_password_hash(request.form.get("password"))
-            db.execute("INSERT INTO users (username, hash) VALUES (?, ?)", username, password)
+            register_user(username, password)
             return redirect("/login")
         except Exception as e:
             print(e)
@@ -200,35 +200,31 @@ def sell():
         elif int(request.form.get("shares")) < 1:
             return apology("invalid number of shares", 400)
 
-        row = db.execute("SELECT * FROM stocks WHERE userId = (?) AND symbol = (?)",
-                         session["user_id"], request.form.get("symbol"))
+        for share in get_user_shares(session["user_id"]):
+            if share["symbol"] == request.form.get("symbol"):
+                row = share
+                break
 
-        numbShares = row[0]["numbShares"]
+        numbShares = row["numbShares"]
 
         if numbShares < int(request.form.get("shares")):
             return apology("you dont have enough shares to sell", 400)
 
 
-        elif numbShares - int(request.form.get("shares")) == 0:
-            db.execute("DELETE FROM stocks WHERE userId = (?) AND symbol = (?)",
-                       session["user_id"], request.form.get("symbol"))
-        else:
-            db.execute("UPDATE stocks SET numbShares = numbShares - (?) WHERE userId = (?) AND symbol = (?)",
-                       int(request.form.get("shares")), session["user_id"], request.form.get("symbol"))
+        remove_stocks(session["user_id"], request.form.get("symbol"), int(request.form.get("shares")))
 
         stock = lookup(request.form.get("symbol"))
         cash = int(request.form.get("shares")) * stock["price"]
 
-        db.execute("UPDATE users SET cash = cash + (?) WHERE id = (?)", cash, session["user_id"])
-
-        db.execute("INSERT INTO transactions (userId, numbShares, price, date, symbol, type) VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, 'sell')",
-                   session["user_id"], int(request.form.get("shares")), stock["price"], request.form.get("symbol"))
-
+        add_user_cash(session["user_id"], cash)
+       
+        create_transaction_record(session["user_id"], int(request.form.get("shares")), stock["price"], request.form.get("symbol"), "sell")
+    
         flash("Sold!")
         return redirect("/")
 
     else:
-        stocks = db.execute("SELECT * FROM stocks WHERE userId = (?)", session["user_id"])
+        stocks = get_user_shares(session["user_id"])
         return render_template("sell.html", stocks=stocks)
 
 
