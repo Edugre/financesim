@@ -4,10 +4,8 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd, get_user_row, get_user_shares, susbstract_user_cash, create_transaction_record, update_user_shares
-
-
-
+from helpers import apology, login_required, lookup, usd
+from sqlhelpers import get_user_row, get_user_shares, substract_user_cash, create_transaction_record, update_user_shares
 
 # Configure application
 app = Flask(__name__)
@@ -77,7 +75,7 @@ def buy():
         if total_cost > cash:
             return apology("not enough cash", 403)
 
-        susbstract_user_cash(session["user_id"], total_cost)
+        substract_user_cash(session["user_id"], total_cost)
 
         create_transaction_record(session["user_id"], int(request.form.get("shares")), stock["price"], request.form.get("symbol"))
 
