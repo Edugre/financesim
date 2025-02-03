@@ -5,7 +5,7 @@ from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, login_required, lookup, usd
-from sqlhelpers import get_user_row, get_user_shares, substract_user_cash, create_transaction_record, update_user_shares, register_user, remove_stocks, add_user_cash, change_user_password
+from sqlhelpers import get_user_row, get_user_shares, substract_user_cash, create_transaction_record, update_user_shares, register_user, remove_stocks, add_user_cash, change_user_password, get_user_transactions, lookup_user
 
 # Configure application
 app = Flask(__name__)
@@ -38,12 +38,12 @@ def index():
             "total": userRow["cash"] # Total amount of capital that the user has distributed
         }
         sharesDB = get_user_shares(session["user_id"])
-        shares = [{}]
+        shares = []
         if sharesDB:
-            for shareDB in sharesDB:
-                stock = lookup(shareDB["symbol"])
-                shares.append({"price": stock["price"], "total": usd(stock["price"]* shareDB["numbShares"])})
-                user["total"] += (stock["price"]* shareDB["numbShares"])
+            for share in sharesDB:
+                stock = lookup(share["symbol"])
+                shares.append({"price": stock["price"], "total": usd(stock["price"]* share["numbShares"]), "symbol": stock["symbol"], "numbShares": share["numbShares"]})
+                user["total"] += (stock["price"]* share["numbShares"])
         else: 
             apology("user not found", 404)
 
@@ -91,9 +91,10 @@ def buy():
 @app.route("/history")
 @login_required
 def history():
-    transactions = db.execute("SELECT * FROM transactions WHERE userId = (?)", session["user_id"])
-    for transaction in transactions:
-        transaction["price"] = usd(transaction["price"])
+    transactionsDB = get_user_transactions(session["user_id"])
+    transactions = []
+    for transaction in transactionsDB:
+        transactions.append({"transId": transaction["transId"], "symbol": transaction["symbol"], "numbShares": transaction["numbShares"], "price": usd(transaction["price"]), "date": transaction["date"], "type": transaction["type"]})
     return render_template("history.html", transactions=transactions)
 
 
@@ -115,18 +116,16 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute(
-            "SELECT * FROM users WHERE username = ?", request.form.get("username")
-        )
+        rows = lookup_user(request.form.get("username"))
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(
-            rows[0]["hash"], request.form.get("password")
+        if not rows or not check_password_hash(
+            rows["hash"], request.form.get("password")
         ):
             return apology("invalid username and/or password", 403)
-
+            
         # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+        session["user_id"] = rows["id"]
 
         # Redirect user to home page
         return redirect("/")
@@ -206,13 +205,13 @@ def sell():
                 row = share
                 break
 
-        numbShares = row["numbShares"]
+        userShares = row["numbShares"]
 
-        if numbShares < int(request.form.get("shares")):
+        if userShares < int(request.form.get("shares")):
             return apology("you dont have enough shares to sell", 400)
 
 
-        remove_stocks(session["user_id"], request.form.get("symbol"), int(request.form.get("shares")))
+        remove_stocks(session["user_id"], request.form.get("symbol"), int(request.form.get("shares")), userShares)
 
         stock = lookup(request.form.get("symbol"))
         cash = int(request.form.get("shares")) * stock["price"]
@@ -237,9 +236,9 @@ def passwordChange():
         if not request.form.get("password"):
             return apology("must provide password", 403)
 
-        rows = get_user_row(session["user_id"])
+        rows = lookup_user(request.form.get("name"))
 
-        if len(rows) != 1 or not check_password_hash(
+        if not rows or not check_password_hash(
             rows["hash"], request.form.get("password")
         ):
             return apology("invalid username and/or password", 403)

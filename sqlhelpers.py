@@ -27,8 +27,8 @@ def get_user_shares(user_id):
             cursor = conn.cursor()
 
             cursor.execute(
-                "SELECT * FROM stocks WHERE userId = :id", 
-                {"id": user_id}
+                "SELECT * FROM stocks WHERE userId = :userId", 
+                {"userId": user_id}
             )
 
             shares = cursor.fetchall()
@@ -40,7 +40,7 @@ def get_user_shares(user_id):
     
 def substract_user_cash(user_id, amount):
     try:
-        with sqlite3.connect("fiannce.db") as conn: 
+        with sqlite3.connect("finance.db") as conn: 
             cursor = conn.cursor()
 
             cursor.execute(
@@ -103,12 +103,12 @@ def register_user(username, password):
         print(f"SQLite error: {e}")
         return None
     
-def remove_stocks(user_id, symbol, shares):
+def remove_stocks(user_id, symbol, shares, userShares):
     try:
         with sqlite3.connect("finance.db") as conn: 
             cursor = conn.cursor()
 
-            if shares == 0: 
+            if userShares - shares == 0: 
                 cursor.execute(
                     "DELETE FROM stocks WHERE userId = :userId AND symbol = :symbol",
                     {"userId": user_id, "symbol": symbol}
@@ -141,17 +141,54 @@ def add_user_cash(user_id, amount):
         print(f"SQLite error: {e}")
         return None
     
-def change_user_password(user_id, new_password):
+def change_user_password(username, new_password):
     try:
         with sqlite3.connect("finance.db") as conn: 
             cursor = conn.cursor()
 
             cursor.execute(
-                "UPDATE users SET hash = :new_password WHERE id = :userId",
-                {"new_password": new_password, "userId": user_id}
+                "UPDATE users SET hash = :new_password WHERE username = :username",
+                {"new_password": new_password, "username": username}
             )
             conn.commit()
             cursor.close()
+    except sqlite3.Error as e:
+        print(f"SQLite error: {e}")
+        return None
+    
+def get_user_transactions(user_id):
+    try:
+        with sqlite3.connect("finance.db") as conn:
+            conn.row_factory = sqlite3.Row
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT * FROM transactions WHERE userId = userId", 
+                {"userId": user_id}
+            )
+
+            transactions = cursor.fetchall()
+            cursor.close()
+            return transactions
+    except sqlite3.Error as e:
+        print(f"SQLite error: {e}")
+        return None
+    
+def lookup_user(username):
+    try:
+        with sqlite3.connect("finance.db") as conn:
+            conn.row_factory = sqlite3.Row
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT * FROM users WHERE username = :username", 
+                {"username": username}
+            )
+            user = cursor.fetchone()
+            cursor.close()
+            return user
     except sqlite3.Error as e:
         print(f"SQLite error: {e}")
         return None

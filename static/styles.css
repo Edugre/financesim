@@ -4,20 +4,84 @@ nav .navbar-brand
     font-size: xx-large;
 }
 
-/* Colors for brand */
-nav .navbar-brand .blue
+/* Colors for navbar */
+nav.navbar
 {
-    color: #537fbe;
+    background-color: #004E64;
 }
-nav .navbar-brand .red
+nav .light-green
 {
-    color: #ea433b;
+    color: #9FFFCB;
 }
-nav .navbar-brand .yellow
+nav .dark-green
 {
-    color: #f5b82e;
+    color: #25A18E;
 }
-nav .navbar-brand .green
+.nav-link.dark-green:hover
 {
-    color: #2e944b;
+    color: #9FFFCB !important;    
 }
+
+/* Button Colors */
+.btn.btn-primary
+{
+    background-color: #004E64 !important;
+    border-color: #004E64 !important;
+}
+.btn:hover
+{
+    background-color: #00A5CF !important;
+    border-color: #00A5CF !important;
+}
+.btn.btn-secondary
+{
+    background-color: #25A18E !important;
+    border-color: #25A18E!important;
+}
+.btn-secondary:hover
+{
+    background-color: #7AE582 !important;
+    border-color: #7AE582 !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus
+{
+    outline: none;
+    border-color: #7AE582;
+    box-shadow: 0 0 10px #7AE582;
+    border-radius: 4px; 
+}
+
+
+/* Apology page style */
+.apology
+{
+    text-align: center;
+    padding: 2rem;
+    line-height: 2.0;
+}
+.sorry-message {
+    font-size: 3.5rem;
+    color: #004E64;
+    margin-bottom: 2rem;
+    letter-spacing: 2px;
+}
+.error-code {
+    font-size: 2.5rem;
+    color: #00A5CF;
+    margin-bottom: 1.5rem; 
+    word-spacing: 4px; 
+  }
+  .code-message {
+    font-size: 1.4rem;
+    color: #004E64; 
+    margin-bottom: 1rem; 
+  }
+  .code-message:last-child {
+    margin-bottom: 2rem;
+  }

@@ -5,7 +5,10 @@
 {% endblock %}
 
 {% block main %}
-    <!-- https://memegen.link/ -->
-    <!-- https://knowyourmeme.com/memes/grumpy-cat -->
-    <img alt="{{ top }}" class="border img-fluid" src="https://api.memegen.link/images/custom/{{ top | urlencode }}/{{ bottom | urlencode }}.jpg?background=https://i.imgur.com/CsCgN7Ll.png&width=400" title="{{ top }}">
+<div class="mb-3 apology">
+    <h1 class="sorry-message">We're Sorry!</h1>
+    <h2 class="error-code">Error code {{code}}</h2>
+    <p class="code-message">{{message}}. Please try again</p>
+</div>
+  
 {% endblock %}
