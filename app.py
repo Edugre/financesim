@@ -1,11 +1,10 @@
 import os
 
-from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup, usd, get_user_row, get_user_shares
 
 # Configure application
 app = Flask(__name__)
@@ -17,10 +16,6 @@ app.jinja_env.filters["usd"] = usd
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
-
-# Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
-
 
 @app.after_request
 def after_request(response):
@@ -34,21 +29,26 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
-    userRow = db.execute("SELECT * FROM users WHERE id = (?)", session["user_id"])
-    user = userRow[0]
-    shares = db.execute("SELECT * FROM stocks WHERE userId = (?)", session["user_id"])
-    user["total"] = user["cash"]
-    for share in shares:
-        stock = lookup(share["symbol"])
-        share["price"] = stock["price"]
-        share["total"] = share["price"] * share["numbShares"]
-        user["total"] += share["total"]
-        share["total"] = usd(share["total"])
+    userRow = get_user_row(session["user_id"])
+    if userRow:
+        user = {
+            "username": userRow["username"],
+            "cash": userRow["cash"],
+            "total": userRow["cash"] # Total amount of capital that the user has distributed
+        }
+        sharesDB = get_user_shares(session["user_id"])
+        shares = [{}]
+        if sharesDB:
+            for shareDB in sharesDB:
+                stock = lookup(shareDB["symbol"])
+                shares.append({"price": stock["price"], "total": usd(stock["price"]* shareDB["numbShares"])})
+                user["total"] += (stock["price"]* shareDB["numbShares"])
+        else: 
+            apology("user not found", 404)
+        user["total"] = usd(user["total"])
+        user["cash"] = usd(user["cash"])
 
-    user["total"] = usd(user["total"])
-    user["cash"] = usd(user["cash"])
-
-    return render_template("index.html", user=user, shares=shares)
+        return render_template("index.html", user=user, shares=shares)
 
 
 @app.route("/buy", methods=["GET", "POST"])

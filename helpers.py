@@ -2,6 +2,7 @@ import requests
 
 from flask import redirect, render_template, session
 from functools import wraps
+import sqlite3
 
 
 def apology(message, code=400):
@@ -67,3 +68,41 @@ def lookup(symbol):
 def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
+
+def get_user_row(user_id):
+    try:
+        with sqlite3.connect("finance.db") as conn:
+            conn.row_factory = sqlite3.Row
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT * FROM users WHERE id = :id", 
+                {"id": user_id}
+            )
+
+            user_row = cursor.fetchone()
+            cursor.close()
+            return user_row
+    except sqlite3.Error as e:
+        print(f"SQLite error: {e}")
+        return None
+
+def get_user_shares(user_id):
+    try:
+        with sqlite3.connect("finance.db") as conn:
+            conn.row_factory = sqlite3.Row
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT * FROM stocks WHERE userId = :id", 
+                {"id": user_id}
+            )
+
+            shares = cursor.fetchall()
+            cursor.close()
+            return shares
+    except sqlite3.Error as e:
+        print(f"SQLite error: {e}")
+        return None 
