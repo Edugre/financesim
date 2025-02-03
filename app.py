@@ -5,7 +5,7 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup, usd, get_user_row, get_user_shares
 
 # Configure application
 app = Flask(__name__)
@@ -34,9 +34,9 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
-    userRow = db.execute("SELECT * FROM users WHERE id = (?)", session["user_id"])
-    user = userRow[0]
-    shares = db.execute("SELECT * FROM stocks WHERE userId = (?)", session["user_id"])
+    userRow = dict(get_user_row(session["user_id"]))
+    user = userRow["username"]
+    shares = dict(get_user_shares(session["user_id"]))
     user["total"] = user["cash"]
     for share in shares:
         stock = lookup(share["symbol"])
