@@ -1,0 +1,6 @@
+{
+    "name": "Flask App",
+    "build": { "dockerfile": "Dockerfile"},
+    "forwardPorts": [5000],
+    "postCreateCommand": "python -m flask run --host=0.0.0.0 --port=5000"
+}
